@@ -1,0 +1,82 @@
+1. for creating jar.
+jar cmf FBoxCloudServer.mf FBoxCloudServer.jar FBoxCloudServer.java *.class
+
+2. start service.(http://www.jcgonzalez.com/ubuntu-16-java-service-wrapper-example)
+
+3. sudo vi /etc/systemd/system/FBoxCloudServer.service
+
+4. write below code.
+
+   [Unit]
+Description = Java Service
+After network.target = FBoxCloudServer.service
+
+[Service]
+Type = forking
+ExecStart = /usr/local/bin/FBoxCloudServer.sh start
+ExecStop = /usr/local/bin/FBoxCloudServer.sh stop
+ExecReload = /usr/local/bin/FBoxCloudServer.sh reload
+
+[Install]
+WantedBy=multi-user.target
+
+
+sudo systemctl daemon-reload
+sudo systemctl enable my-webapp.service
+sudo systemctl start my-webapp
+sudo systemctl status my-webapp
+
+5. sudo vi /usr/local/bin/FBoxCloudServer.sh
+
+#!/bin/sh
+SERVICE_NAME=FBoxCloudServer
+PATH_TO_JAR=/home/pk_upadhyay/FBoxCloudServer.jar
+PID_PATH_NAME=/tmp/FBoxCloudServer-pid
+case $1 in
+    start)
+        echo "Starting $SERVICE_NAME ..."
+        if [ ! -f $PID_PATH_NAME ]; then
+            nohup java -jar $PATH_TO_JAR /tmp 2>> /dev/null >> /dev/null &
+                        echo $! > $PID_PATH_NAME
+            echo "$SERVICE_NAME started ..."
+        else
+            echo "$SERVICE_NAME is already running ..."
+        fi
+    ;;
+    stop)
+        if [ -f $PID_PATH_NAME ]; then
+            PID=$(cat $PID_PATH_NAME);
+            echo "$SERVICE_NAME stoping ..."
+            kill $PID;
+            echo "$SERVICE_NAME stopped ..."
+            rm $PID_PATH_NAME
+        else
+            echo "$SERVICE_NAME is not running ..."
+        fi
+    ;;
+    restart)
+        if [ -f $PID_PATH_NAME ]; then
+            PID=$(cat $PID_PATH_NAME);
+            echo "$SERVICE_NAME stopping ...";
+            kill $PID;
+            echo "$SERVICE_NAME stopped ...";
+            rm $PID_PATH_NAME
+            echo "$SERVICE_NAME starting ..."
+            nohup java -jar $PATH_TO_JAR /tmp 2>> /dev/null >> /dev/null &
+                        echo $! > $PID_PATH_NAME
+            echo "$SERVICE_NAME started ..."
+        else
+            echo "$SERVICE_NAME is not running ..."
+        fi
+    ;;
+esac
+
+6. sudo chmod +x /usr/local/bin/FBoxCloudServer.sh
+7. sudo systemctl daemon-reload
+8. sudo systemctl enable FBoxCloudServer.service
+9. sudo systemctl start FBoxCloudServer
+10. sudo systemctl status FBoxCloudServer
+
+11. if issue follow this link
+     https://computingforgeeks.com/how-to-run-java-jar-application-with-systemd-on-linux/?utm_content=bd-true
+
